@@ -13,13 +13,11 @@ streamlit_bg_color = "#0E1117"
 logging.basicConfig(level=logging.DEBUG)
 
 st.title(f'Plotting episode ratings')
-
-
 data_load_state = st.text('Loading data...')
 
 # 1. load all data and episode specific data
 BASE_URL = 'https://api.tvmaze.com'
-path = f'{BASE_URL}/shows/52?embed=episodes'
+path = f'{BASE_URL}/shows/431?embed=episodes'
 
 show_data, episodes_data = load_data(path)
 
