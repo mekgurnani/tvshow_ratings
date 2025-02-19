@@ -132,9 +132,15 @@ trace2 = go.Heatmap(
 fig = go.Figure(data=[trace1, trace2])
 
 fig.update_layout(
+    hoverlabel=dict(
+        font_size=16,  # Increase font size
+        font_family="Arial",  # Change font if needed
+        bgcolor="rgba(0, 0, 0, 0.8)",  # Optional: Change background color for better contrast
+        font_color="white"  # Optional: Change font color for readability
+    ),
     title={
         "text": (
-            f"Episode Ratings: {show_name} | Language: {show_language} | "
+            f"{show_name} | Language: {show_language} | "
             f"Show status: {show_status} | Overall Rating: {average_rating}"
         ),
         "x": 0.5,  # Center align title
@@ -156,6 +162,15 @@ fig.update_layout(
     height=700,  # Increased height
     width=1200,  # Increased width
     margin=dict(l=180, r=180, t=180, b=180),  # More space for x-axis labels
+)
+
+fig.update_layout(
+    hoverlabel=dict(
+        font_size=16,  # Increase font size
+        font_family="Arial",  # Change font if needed
+        bgcolor="rgba(0, 0, 0, 0.8)",  # Optional: Change background color for better contrast
+        font_color="white"  # Optional: Change font color for readability
+    )
 )
 
 # Add a container to avoid crowding
