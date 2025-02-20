@@ -17,9 +17,10 @@ data_load_state = st.text('Loading data...')
 
 # 1. load all data and episode specific data
 BASE_URL = 'https://api.tvmaze.com'
-path = f'{BASE_URL}/shows/431?embed=episodes'
+path = f'{BASE_URL}/shows/25?embed=episodes'
 
 show_data, episodes_data = load_data(path)
+episodes_data = episodes_data.fillna(value=np.nan)
 
 # 2. get other metadata
 show_name = show_data['name']
@@ -30,6 +31,8 @@ average_rating = show_data['rating']['average']
 data_load_state.text("Loading data...done!")
 
 data_load_state = st.text('Collecting ratings data to be plotted...')
+
+print(episodes_data)
 
 # defining heatmap dimensions
 seasons = episodes_data['season'].unique()
