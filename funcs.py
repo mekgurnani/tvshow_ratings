@@ -6,6 +6,14 @@ import numpy as np
 import plotly.graph_objects as go
 
 @st.cache_data
+def search_tvmaze(query):
+    url = f"https://api.tvmaze.com/search/shows?q={query}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    return []
+
+@st.cache_data
 def load_data(path):
     
     resp = requests.get(path, timeout=1)
@@ -123,6 +131,5 @@ def plotting_heatmap(ratings_list, episodes_name_list, rows_plotly, columns_plot
         )
     )
 
-    # Add a container to avoid crowding
     with st.container():
         st.plotly_chart(fig, use_container_width=True)
