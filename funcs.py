@@ -29,6 +29,7 @@ def load_data(path):
                                         "episode_rating": episode['rating']['average']}])
         episodes_data = pd.concat([episodes_data, episode_data], ignore_index=True)
 
+    episodes_data = episodes_data.fillna(value=np.nan)
     return show_data, episodes_data
 
 def find_longest_season(seasons, episodes_data):
@@ -56,8 +57,19 @@ def populate_heatmap_input(seasons, episodes_data, ratings_list, episodes_name_l
 
     return episodes_name_list, ratings_list
 
-def plotting_heatmap(ratings_list, episodes_name_list, rows_plotly, columns_plotly, show_data):
+def plotting_heatmap(episodes_data, show_data, plot_title="📊 Plotting episode ratings for: "):
+    seasons = episodes_data['season'].unique()
+    rows = len(seasons)
+    columns = find_longest_season(seasons, episodes_data)
 
+    rows_plotly = [f"Season {i}" for i in seasons]
+    columns_plotly = [f"Episode {i+1}" for i in range(columns)]
+
+    ratings_list = [[np.nan] * columns for _ in range(rows)]
+    episodes_name_list = [[np.nan] * columns for _ in range(rows)]
+
+    episodes_name_list, ratings_list = populate_heatmap_input(seasons, episodes_data, ratings_list, episodes_name_list)
+    
     show_name = show_data['name']
     show_language = show_data['language']
     show_status = show_data['status']
@@ -131,5 +143,8 @@ def plotting_heatmap(ratings_list, episodes_name_list, rows_plotly, columns_plot
         )
     )
 
+    st.subheader(f'{plot_title}{show_name}')
+
     with st.container():
         st.plotly_chart(fig, use_container_width=True)
+
