@@ -21,8 +21,8 @@ st.title(f'TV Show Ratings Heatmap')
 query = st.text_input("Enter a show name:")
 
 # show plotted by default - severance
-severance_path = "https://api.tvmaze.com/shows/44933?embed=episodes"
-default_show_data, default_episodes_data = load_data(severance_path)
+current_show_path = "https://api.tvmaze.com/shows/305?embed=episodes"
+default_show_data, default_episodes_data = load_data(current_show_path)
 
 if not query:
     plotting_heatmap(default_episodes_data, default_show_data, plot_title="What I am watching currently: ")
