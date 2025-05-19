@@ -1,6 +1,4 @@
-# 📺 TV Show Ratings Explorer
-
-**Tired of getting spoilers from friends but still want to know if the episode was worth it?**
+![App preview](preview.png)
 
 This app lets you explore the highs and lows of your favorite TV shows with a season-by-season breakdown of episode ratings — visualized as an interactive heatmap.
 
