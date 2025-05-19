@@ -4,33 +4,62 @@ import streamlit as st
 import plotly.express as px
 import numpy as np
 import plotly.graph_objects as go
+import time
+import requests
+from requests.exceptions import SSLError, ConnectionError, Timeout, RequestException
 
 @st.cache_data
-def search_tvmaze(query):
+def search_tvmaze(query, retries=3, delay=1):
     url = f"https://api.tvmaze.com/search/shows?q={query}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
+
+    for attempt in range(retries):
+        try:
+            response = requests.get(url, timeout=5)  # increase timeout to be safe
+            response.raise_for_status()
+            return response.json()
+        
+        except (SSLError, ConnectionError, Timeout) as e:
+            time.sleep(delay)
+        
+        except RequestException as e:
+            st.error(f"Failed to reach TVMaze: {e}")
+            break
+    
+    # If all attempts fail
+    st.error("Could not connect to TVMaze after several attempts. Please try again later.")
     return []
 
 @st.cache_data
-def load_data(path):
-    
-    resp = requests.get(path, timeout=1)
-    show_data = resp.json()
-    episodes_dict = show_data['_embedded']['episodes']
+def load_data(path, retries=3, delay=1):
+    for attempt in range(retries):
+        try:
+            resp = requests.get(path, timeout=5)
+            resp.raise_for_status()
+            show_data = resp.json()
+            episodes_dict = show_data['_embedded']['episodes']
 
-    episodes_data = pd.DataFrame(columns=["name", "season", "episode_number", "episode_rating"])
+            episodes_data = pd.DataFrame(columns=["name", "season", "episode_number", "episode_rating"])
 
-    for episode in episodes_dict:
-        episode_data = pd.DataFrame([{"name": episode['name'], 
-                                        "season": episode['season'], 
-                                        "episode_number": episode['number'],
-                                        "episode_rating": episode['rating']['average']}])
-        episodes_data = pd.concat([episodes_data, episode_data], ignore_index=True)
+            for episode in episodes_dict:
+                episode_data = pd.DataFrame([{
+                    "name": episode['name'], 
+                    "season": episode['season'], 
+                    "episode_number": episode['number'],
+                    "episode_rating": episode['rating']['average']
+                }])
+                episodes_data = pd.concat([episodes_data, episode_data], ignore_index=True)
 
-    episodes_data = episodes_data.fillna(value=np.nan)
-    return show_data, episodes_data
+            episodes_data = episodes_data.fillna(value=np.nan)
+            return show_data, episodes_data
+
+        except (SSLError, ConnectionError) as e:
+            time.sleep(delay)
+        except Exception as e:
+            st.error(f"Unexpected error: {e}")
+            break
+
+    st.error("Failed to retrieve data after multiple attempts.")
+    return {}, pd.DataFrame()
 
 def find_longest_season(seasons, episodes_data):
     max_episodes = 1
@@ -70,6 +99,13 @@ def plotting_heatmap(episodes_data, show_data, plot_title="📊 Plotting episode
 
     episodes_name_list, ratings_list = populate_heatmap_input(seasons, episodes_data, ratings_list, episodes_name_list)
     
+    episodes_tooltip_list = [
+    [
+        name if isinstance(name, str) and not pd.isna(name) else "Season has ended"
+        for name in row
+    ]
+    for row in episodes_name_list]
+    
     show_name = show_data['name']
     show_language = show_data['language']
     show_status = show_data['status']
@@ -81,7 +117,7 @@ def plotting_heatmap(episodes_data, show_data, plot_title="📊 Plotting episode
         z=[[1 if np.isnan(rating) else np.nan for rating in row] for row in ratings_list],
         x=columns_plotly,
         y=rows_plotly,
-        colorscale=[[0, streamlit_bg_color], [1, streamlit_bg_color]],  # Match background
+        colorscale=[[0, "#222222"], [1, "#222222"]],
         showscale=False,
         hoverinfo="skip",
     )
@@ -91,60 +127,63 @@ def plotting_heatmap(episodes_data, show_data, plot_title="📊 Plotting episode
         x=columns_plotly,
         y=rows_plotly,
         colorscale="Magma_r",
-        colorbar={"title": "Ratings"},  # Reduce colorbar size
-        text=episodes_name_list,
-        texttemplate="<b>%{z:.1f}</b>",  # Show numbers inside cells with one decimal place
+        colorbar={"title": "Ratings"},
+        text=episodes_tooltip_list,
+        texttemplate="<b>%{z:.1f}</b>",
         hovertemplate="%{text}<extra></extra>",
         textfont={"size": 18, "color": "dark grey"},
     )
 
-    # Create the figure
     fig = go.Figure(data=[trace1, trace2])
+
+    # Dynamic sizing 
+    min_height = 700
+    min_width = 1200
+    height_per_row = 20
+    width_per_col = 20
+
+    dynamic_height = min_height + (rows - 1) * height_per_row
+    dynamic_width = min_width + (columns - 1) * width_per_col
+
+    # Optional cap to prevent excessive size
+    dynamic_height = min(dynamic_height, 1800)
+    dynamic_width = min(dynamic_width, 2000)
 
     fig.update_layout(
         hoverlabel=dict(
-            font_size=16,  # Increase font size
-            font_family="Arial",  # Change font if needed
-            bgcolor="rgba(0, 0, 0, 0.8)",  # Optional: Change background color for better contrast
-            font_color="white"  # Optional: Change font color for readability
+            font_size=16,
+            font_family="Arial",
+            bgcolor="rgba(0, 0, 0, 0.8)",
+            font_color="white"
         ),
         title={
             "text": (
                 f"{show_name} | Language: {show_language} | "
                 f"Show status: {show_status} | Overall Rating: {average_rating}"
             ),
-            "x": 0.5,  # Center align title
-            "y": 0.98,  # Push title slightly higher
+            "x": 0.5,
+            "y": 0.98,
             "xanchor": "center",
             "yanchor": "top",
-            "font": {"size": 22},  # Increase title font size
+            "font": {"size": 22},
         },
         xaxis={
             "side": "top",
-            "tickangle": -45,  # Rotate x-axis labels
-            "tickfont": {"size": 18},  # Increase font size of labels
+            "tickangle": -45,
+            "tickfont": {"size": 18},
         },
         yaxis=dict(
             visible=True,
             autorange="reversed",
-            tickfont={"size": 18},  # Increase font size of y-axis labels
+            tickfont={"size": 18},
         ),
-        height=700,  # Increased height
-        width=1200,  # Increased width
-        margin=dict(l=180, r=180, t=180, b=180),  # More space for x-axis labels
-    )
-
-    fig.update_layout(
-        hoverlabel=dict(
-            font_size=16,  # Increase font size
-            font_family="Arial",  # Change font if needed
-            bgcolor="rgba(0, 0, 0, 0.8)",  # Optional: Change background color for better contrast
-            font_color="white"  # Optional: Change font color for readability
-        )
+        height=dynamic_height,
+        width=dynamic_width,
+        margin=dict(l=180, r=180, t=180, b=180),
     )
 
     st.subheader(f'{plot_title}{show_name}')
-
+    
     with st.container():
-        st.plotly_chart(fig, use_container_width=True)
-
+        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+        st.plotly_chart(fig, use_container_width=False)
