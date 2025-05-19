@@ -1,1 +1,1 @@
-Go here - https://mekgurnani-tvshow-ratings-v2.streamlit.app
+Go here - https://tvshowratings.streamlit.app/
