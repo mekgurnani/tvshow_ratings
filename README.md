@@ -25,14 +25,14 @@ This tool helps:
    ```
 
 2. **Set up virtual environment**
-  ```bash
-  python -m venv venv
-  source venv/bin/activate
-  pip install -r requirements.txt
-  ```
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
 3. **Run your own Streamlit app**
-  ```bash
-  streamlit run streamlit_app_3.0.py
-  ```
+   ```bash
+   streamlit run streamlit_app_3.0.py
+   ```
   
