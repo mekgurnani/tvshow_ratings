@@ -1,7 +1,12 @@
 # 📺 TV Show Ratings Explorer
 
-**Tired of getting spoilers from friends but still want to know if the episode was worth it?**  
+**Tired of getting spoilers from friends but still want to know if the episode was worth it?**
+
 This app lets you explore the highs and lows of your favorite TV shows with a season-by-season breakdown of episode ratings — visualized as an interactive heatmap.
+
+Go visit the [app](https://tvshowratings.streamlit.app/).
+
+Uses the [TVMaze API](https://www.tvmaze.com).
 
 ---
 
@@ -26,7 +31,7 @@ This tool helps:
 
 2. **Set up virtual environment**
    ```bash
-   python -m venv venv
+   python -m venv .venv
    source venv/bin/activate
    pip install -r requirements.txt
    ```
